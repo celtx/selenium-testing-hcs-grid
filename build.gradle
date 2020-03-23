@@ -1,0 +1,101 @@
+/*
+ * Copyright (c) Celtx Inc. <https://www.celtx.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    jcenter()
+}
+
+ext {
+    junitJupiterVersion   = '5.6.0'
+    mockitoJupiterVersion = '3.2.4'
+    slf4jJdkVersion       = '1.7.30'
+    jsoupVersion          = '1.11.2'
+    seleniumVersion       = '3.141.59'
+    rerunnerVersion       = '2.1.6'
+    hamcrestVersion       = '2.1'
+    commonsIOVersion      = '2.6'
+    jsonUnitVersion       = '2.8.0'
+    gsonVersion           = '2.8.6'
+    commonsCodecVersion   = '1.13'
+    httpClientVersion     = '4.5.10'
+    compatQualVersion     = '2.5.5'
+    awsSdkVersion         = '2.10.56'
+    guavaVersion          = '28.2-jre'
+    jgitVersion           = '5.6.0.201912101111-r'
+    asyncHttpVersion      = '2.10.5'
+}
+dependencies {
+    api 'org.apache.commons:commons-math3:3.6.1'
+    implementation (
+            'com.google.guava:guava:${guavaVersion}',
+            "org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}",
+            "org.junit.jupiter:junit-jupiter-params:${junitJupiterVersion}",
+            "org.mockito:mockito-junit-jupiter:${mockitoJupiterVersion}",
+            "org.seleniumhq.selenium:selenium-java:${seleniumVersion}",
+            "software.amazon.awssdk:s3:${awsSdkVersion}",
+            "software.amazon.awssdk:codebuild:${awsSdkVersion}",
+            "software.amazon.awssdk:cloudwatchlogs:${awsSdkVersion}",
+            "org.eclipse.jgit:org.eclipse.jgit:${jgitVersion}",
+            "org.asynchttpclient:async-http-client:${asyncHttpVersion}"
+    )
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}"
+    testRuntimeOnly (
+            "org.junit.jupiter:junit-jupiter-engine:${junitJupiterVersion}",
+            "org.slf4j:slf4j-jdk14:${slf4jJdkVersion}"
+    )
+}
+
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+
+    reports {
+        html.enabled = true
+    }
+
+    // pass logging config to build daemon
+    def loggingConfigFile = System.getProperty("java.util.logging.config.file")
+    (loggingConfigFile ? (systemProperty("java.util.logging.config.file", loggingConfigFile)) : {})
+
+    // THIS MUST MATCH GridExecution.TEST_INVOCATION_ID_PROPERTY, destined for grid nodes
+    def testInvocationId = System.getProperty("cx.grid.test.invocationId")
+    (testInvocationId ? (systemProperty("cx.grid.test.invocationId", testInvocationId)) : {})
+}
+
+sourceSets {
+    test {
+        def testConcurrency = System.getenv("CXS_TEST_CONCURRENCY")
+        if (testConcurrency) {
+            try {
+                def testConcurrencyValue = Long.parseLong(testConcurrency);
+                if (testConcurrencyValue > 1) {
+                    // enable etc/junit-platform.properties file to be found which holds
+                    // the parallel test execution configuration
+                    resources.srcDirs += file('etc')
+                }
+            } catch(Exception ignored) {
+                ignored.printStackTrace()
+            }
+        }
+    }
+}

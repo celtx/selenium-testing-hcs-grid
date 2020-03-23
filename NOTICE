@@ -1,0 +1,10 @@
+Celtx HCS Grid
+Copyright 2020 and onwards Celtx Inc.
+
+This product includes software developed at
+Celtx Inc. (https://www.celtx.com).
+
+This product includes code derived from:
+
+1. https://fahdshariff.blogspot.com/2011/08/java-7-working-with-zip-files.html
+2. https://github.com/openjdk/jdk/blob/jdk8-b120/jdk/src/share/classes/java/io/File.java#L1890
