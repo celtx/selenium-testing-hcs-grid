@@ -2,12 +2,12 @@
 
 ## INTRODUCTION
 
-We have developed a method for running JUnit 5 based tests in a cloud-based execution environment
+We have developed a method for running JUnit 5 tests in a cloud-based execution environment
 having the desired features of high concurrency, per-test separate execution environments, and
 minimal disruption to existing test source code.
 
 To make it easier to refer to, let's call this new test execution method _HCS Grid_, since its main
-goals are high concurrency, and per-test execution environment separation.
+goals are high concurrency and per-test execution environment separation.
 
 ## MOTIVATION
 
@@ -15,11 +15,11 @@ At Celtx, before each production deployment, we run many hundreds of selenium te
 are also constantly adding more and more selenium tests as we discover new bugs and add
 new features.
 
-In the past few months our total test execution time for selenium tests was starting to
+In the past few months, our total test execution time for selenium tests was starting to
 approach **four hours**.
 
 We have also noticed that as the number of selenium tests grew, that the overall
-stability of the testing grid seemed to be affected.  In particular we started to see
+stability of the testing grid seemed to be affected.  In particular, we started to see
 more and more occurrences of `UnreachableBrowserException`, and other similar errors,
 which indicated to us that our test execution results were becomingly increasingly
 non-deterministic.
@@ -27,7 +27,7 @@ non-deterministic.
 ## TL;DR
 
 If you already use Gradle and JUnit 5 for your Selenium tests, this HCS Grid requires very 
-little disruption to your code and gradle configuration.
+little disruption to your code and Gradle configuration.
 
 Indeed, if you wish to use it in your own code, you simply need to add our JUnit 5 test
 invocation interceptor to your test class (or base class) similar to:
@@ -38,7 +38,7 @@ invocation interceptor to your test class (or base class) similar to:
   }
 ```
 
-You may then run your tests normally, as if the interceptor didn't exist via:
+You may then run your tests normally as if the interceptor didn't exist via:
 
 ```shell
 $ ./gradlew cleanTest test
@@ -46,7 +46,7 @@ $ ./gradlew cleanTest test
 
 The HCS Grid depends on [AWS CodeBuild](https://aws.amazon.com/codebuild/).  If you have already satisfied the
 AWS CodeBuild prerequisites listed in the [CODEBUILD](docs/CODEBUILD.md)
-document, then to use the HCS Grid, you may execute your tests with with something like:
+The document, then to use the HCS Grid, you may execute your tests with something like:
 
 ```shell
 $ CXS_TEST_USE_GRID=1 CXS_TEST_CONCURRENCY=60 ./gradlew cleanTest test
@@ -64,7 +64,7 @@ prerequisites:
 1. sufficient privileges for the IAM user that will be used when executing the tests
 
 *Note:* that when we run tests using the HCS Grid, it is imperative that JUnit 5
-parallel mode be enabled.  In this sample code, we accomplish by using a
+parallel mode is enabled.  In this sample code, we accomplish by using a
 sourceSets section of the [build.gradle](build.gradle) file.
 
 # OVERVIEW
@@ -81,10 +81,10 @@ execution environment will now look like:
 Each JUnit 5 test executed will cause a new AWS CodeBuild request to be made, each request with its
 own custom [buildspec.yml](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html) as shown below.
   
-This AWS CodeBuild buildspec sets up a docker-based selenium grid per test.
+This AWS CodeBuild buildspec sets up a Docker-based selenium grid per test.
 
 This example buildspec also hints at how this test execution method handles parameterized tests
-(note the occurrence of `-Dcx.grid.test.invocationId=<param.toString()>` in the gradle wrapper command).
+(note the occurrence of `-Dcx.grid.test.invocationId=<param.toString()>` in the Gradle wrapper command).
 
 ```yaml
 version: 0.2
@@ -268,9 +268,10 @@ for one reason or another, in times of heavy usage.
 
 We ran our own traditional Selenium Grid for a short time to get a glimpse into its inner
 workings and we did notice that it is possible to easily end up with orphan browser processes
-(which are eventually cleaned up).  It's not unreasonable to assume that on very busy browser
-nodes, that the "reaper" might not have a chance to clear out orphan browser processes quickly
-enough, and our test might end up being executed against a resource-starved browser node.
+(which are eventually cleaned up).  It's not unreasonable to assume that on very busy browser nodes,
+that the "reaper" might not have a chance to clear out orphan browser processes quickly enough, and
+our test might end up being executed against a resource-starved browser node.
+
 
 Since our goal is to add even more selenium tests in the future, we saw that our current test
 execution environment would not be sustainable due to:
@@ -291,13 +292,13 @@ performed by our existing developers and testers.
 
 ## Goals for new architecture
 
-1. Require very little changes to existing codebase
+1. Require very little changes to the existing codebase
 1. Offload selenium test execution to AWS CodeBuild
 1. Each test should execute in its own independent Selenium Grid
 1. Test failures should appear as if they failed locally, i.e the AWS CodeBuild logs
    should be fetched and placed in situ.
 1. Amount of concurrency should be configurable
-1. The use of the AWS CodeBuild grid MUST be opt-in, otherwise the selenium tests will run
+1. The use of the AWS CodeBuild grid MUST be opt-in, otherwise, the selenium tests will run
    assuming a traditional Selenium Grid environment.
 1. Parameterized tests should dispatch each parameter to a separate AWS CodeBuild instance for
    increased parallelism.
@@ -305,9 +306,7 @@ performed by our existing developers and testers.
 ## Implementation
 
 Overall we wanted to create an architecture where each test was executed in its own
-completely independent execution environment.  For that, we chose a combo of AWS CodeBuild 
-and Docker-Compose to provide a _personal_ Selenium Grid for each test.  That personal
-Selenium Grid is based on docker images supplied by
+completely independent execution environment.  For that, we chose a combo of AWS CodeBuild and Docker-Compose to provide a _personal_ Selenium Grid for each test.  That personal Selenium Grid is based on docker images supplied by
 [SeleniumHQ](https://github.com/SeleniumHQ/docker-selenium).
 
 We chose AWS CodeBuild because they have a high build concurrency by default (60 simultaneous builds)
@@ -344,7 +343,7 @@ For a given AWS CodeBuild request, the same Invocation Interceptor plays a sligh
 different role. There, it ensures that a fresh Selenium Grid is made available for the test via
 docker-compose.  It is also responsible for handling the execution of parameterized tests,
 and in particular ensuring that it will be executing only the specific parameter assigned to it.
-Additionally, the Invocation Interceptor tries, for non-matching paramters in parameterized tests,
+Additionally, the Invocation Interceptor tries, for non-matching parameters in parameterized tests,
 to avoid executing any potentially costly @BeforeEach or @AfterEach methods.
 
 **New Selenium-based Architecture: Overview**
@@ -359,10 +358,10 @@ to avoid executing any potentially costly @BeforeEach or @AfterEach methods.
 ## Conclusion
 
 Using this new HCS Grid, we were able to significantly decrease both test execution times
-and test result non-determinism compared with the traditional "Selenium Grid as a service"
-we were using.
+and the occurrences of non-deterministic test results, when compared with the traditional
+"Selenium Grid as a service" that we had been using.
 
-It's very early days, but initial indicators forecast our testing costs to be dramatically
+Our OPS monitoring also forecasts that our testing-related costs will be dramatically
 reduced as well; up to four to five times cheaper.
 
 In fact, we have reduced our test execution times for our full suite from almost four hours to
@@ -372,7 +371,7 @@ Also, non-determinism problems like UnreachableBrowserExeception errors have all
 
 ## Advantages
 
-* Dramatically decreased execution tests for entire test suite, **10X decreased duration**.
+* Dramatically decreased execution tests for the entire test suite, **10X decreased duration**.
 * Much improved test result repeatability and reliability due to fully independent test
   execution environment for each test
 * Parameterized tests are "expanded" at runtime so that each parameter gets its own
