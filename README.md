@@ -44,9 +44,7 @@ You may then run your tests normally as if the interceptor didn't exist via:
 $ ./gradlew cleanTest test
 ```
 
-The HCS Grid depends on [AWS CodeBuild](https://aws.amazon.com/codebuild/).  If you have already satisfied the
-AWS CodeBuild prerequisites listed in the [CODEBUILD](docs/CODEBUILD.md)
-The document, then to use the HCS Grid, you may execute your tests with something like:
+You may run your tests with the HCS Grid via (assuming prequisites are met):
 
 ```shell
 $ CXS_TEST_USE_GRID=1 CXS_TEST_CONCURRENCY=60 ./gradlew cleanTest test
@@ -60,8 +58,14 @@ prerequisites:
 1. JUnit v5.6.0 or later
 1. Gradle build system
 1. AWS S3 bucket for use during test execution
+1. AWS CloudWatch Logs log group for AWS CodeBuild build output
 1. properly configured AWS IAM service role for use by AWS CodeBuild
 1. sufficient privileges for the IAM user that will be used when executing the tests
+1. AWS SDK credentials/configuration for IAM user and region, e.g. `$HOME/.aws/credentials` and `$HOME/.aws/config`
+
+The HCS Grid depends on the [AWS CodeBuild](https://aws.amazon.com/codebuild/) service.
+This service requires an IAM service role.  That requirement, and others are listed in 
+the [CODEBUILD](docs/CODEBUILD.md) document.
 
 *Note:* that when we run tests using the HCS Grid, it is imperative that JUnit 5
 parallel mode is enabled.  In this sample code, we accomplish by using a
